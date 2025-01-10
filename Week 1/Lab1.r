@@ -1,7 +1,6 @@
 #This is tutorial one
 #set your working directory
-#dir.wd<-"C:\\Users\\L03054557\\OneDrive\\Edmundo-ITESM\\2.Cursos Impartidos\\Econometrics II\\Lectures\\Lecture 3\\"
-dir.wd<- "/Users/edmun/Library/CloudStorage/OneDrive-Personal/Edmundo-ITESM/2.Cursos Impartidos/Econometrics MEK/MEK/Lectures/Lecture 1/"
+dir.wd<- "/Users/edmun/Library/CloudStorage/OneDrive-Personal/Edmundo-ITESM/2.Cursos Impartidos/Econometrics MEK/MEK/econometrics_mek/Week 1/"
 setwd(dir.wd)
 #do you want to check if this was done correctly? No problem! use the following function:
 getwd()
