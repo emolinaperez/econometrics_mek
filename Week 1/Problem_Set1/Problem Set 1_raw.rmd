@@ -97,7 +97,7 @@ These questions ask you to analyze a data set with information that was collecte
 
 #### h. Implement your proposed test using the job corps data. Does it appear that attrition is a problem? 
 
-#### i. For the rest of the questions, only use individuals who complete the 48 month follow-up. Use the subset() function to retain only the data points for which attrit==1. Estimate the experimental impact on earnings in the first quarter after random assignment and test whether the estimated impacts are statistically distinguishable from zero. 
+#### i. For the rest of the questions, only use individuals who complete the 48 month follow-up. Use the subset() function to retain only the data points for which attrit==0. Estimate the experimental impact on earnings in the first quarter after random assignment and test whether the estimated impacts are statistically distinguishable from zero. 
 
 #### j. Given the structure of the Job Corps program, provide an explanation for this result. 
 
