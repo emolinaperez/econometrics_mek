@@ -19,6 +19,8 @@ Office hours
 
 Teams link: http://bit.ly/3Pw4CNv
 
+Recordings: https://bit.ly/3Cwns4b
+
 ## I. Description
 The goal of this course is to learn how to approach relevant economic questions with rigorous applied empirical research based on econometric techniques. Throughout the lectures, a wide range of economic phenomena -e.g. effects of welfare programs, health outcomes, wage and educational differences, among others- will be discussed. At the heart of the course we will study the economic evaluation problem as a missing data problem since, at any moment in time, an individual is intervened or not, but we can never observe the counterfactual. If we could observe the outcomes for those intervened had they not participated then there would be no evaluation problem.
 
