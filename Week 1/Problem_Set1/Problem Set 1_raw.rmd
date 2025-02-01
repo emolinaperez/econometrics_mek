@@ -85,7 +85,8 @@ These questions ask you to analyze a data set with information that was collecte
 
 #### b. Conduct similar tests of the randomization using other variables [Hint: be careful about the observable characteristics that you analyze]
 
-#### c. Another way to test the randomization is by seeing how closely the observable characteristics can predict whether someone is in the experimental group or the control group. One way to implement this test is by running the following regression: 
+#### c. Another way to test the randomization is by seeing how closely the observable characteristics can predict whether someone is in the experimental group or the control group. One way to implement this test is by running the following regression:
+$T_i = \alpha + \gamma*W_i + \epsilon_i$
 
 #### d.What is your overall impression from these results? Was the randomization successful? [limit your discussion to about 3 sentences] 
 
