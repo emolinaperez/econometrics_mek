@@ -1,7 +1,7 @@
 rm(list=ls())
 # load packages
 if (!require(pacman)) install.packages("pacman") 
-p_load('ggplot2', 'sandwich','lmtest', 'estimatr', 'clubSandwich') # clubSandwich: for clustered robust standard errors
+p_load('ggplot2', 'sandwich','lmtest', 'estimatr', 'clubSandwich', 'stargazer') # clubSandwich: for clustered robust standard errors
 
 # 1. Load the dataset  
 data <- read.csv("Week 5/data/DDK2011_corrected.csv")
@@ -39,11 +39,11 @@ colnames(descriptive_results) <- c("Mean_Tracking", "SD_Tracking", "Mean_Non_Tra
 descriptive_results_df <- data.frame(Variable = vars_to_analyze, descriptive_results)
 
 # Display the descriptive statistics
-print(descriptive_results_df)
+descriptive_results_df
 
 # Visualize the distribution of total scores by tracking status using ggplot
 p <- ggplot(data_clean, aes(x = totalscore, fill = factor(tracking))) +
-  geom_histogram(position = "dodge", bins = 20, alpha = 0.7) +
+  geom_histogram(position = "dodge", bins = 30, alpha = 0.7) +
   facet_wrap(~tracking, labeller = as_labeller(c(`0` = "Non-Tracking Schools", `1` = "Tracking Schools"))) +
   scale_fill_manual(values = c("red", "blue")) +
   labs(title = "Distribution of Total Scores by Tracking Status", 
@@ -57,22 +57,32 @@ print(p)
 # 5. Replicating Key Results (Replicating Table 2)
 # Simple OLS regression: Impact of tracking on total scores
 
-#
+# Standardize
+# Z= X−μ/σ
 data_clean$totalscore_std <- scale(data_clean$totalscore)
+data_clean$mathscoreraw_std <- scale(data_clean$mathscoreraw)
+data_clean$litscore_std <- scale(data_clean$litscore)
 
+# OLS regression for Total Scores
 model_ols <- lm(totalscore_std ~ tracking, data = data_clean)
 summary(model_ols)
 
-stargazer(model_math, type='text')
+# formatted summary table of the OLS regression 
+stargazer(model_ols, type='text', title='Table 1: Total Scores')
 
-# OLS regression for Math and Literacy Scores
-model_math <- lm(mathscoreraw ~ tracking, data = data_clean)
+# OLS regression for Math Scores
+model_math <- lm(mathscoreraw_std ~ tracking, data = data_clean)
 summary(model_math)
 
-stargazer(model_math)
+# formatted summary table of the OLS regression 
+stargazer(model_math, type='text', title='Table 2: Math Scores')
 
-model_literacy <- lm(litscore ~ tracking, data = data_clean)
+# OLS regression for Literacy Scores
+model_literacy <- lm(litscore_std ~ tracking, data = data_clean)
 summary(model_literacy)
+
+# formatted summary table of the OLS regression 
+stargazer(model_math, type='text', title='Table 3: Literacy Scores')
 
 # Robust standard errors
 coeftest(model_ols, vcov = vcovHC(model_ols, type = "HC1"))
@@ -82,8 +92,9 @@ coeftest(model_literacy, vcov = vcovHC(model_literacy, type = "HC1"))
 # 6. Clustered Robust Standard Errors
 # Assuming clustering at the school level (replace 'school_id' with the actual cluster variable)
 # Example: Clustered standard errors for total scores
-model_clustered <- lm(totalscore ~ tracking, data = data_clean)
+model_clustered <- lm(totalscore_std ~ tracking, data = data_clean)
 summary(model_clustered)
+
 cluster_se <- vcovCL(model_clustered, cluster = ~schoolid)
 coeftest(model_ols, vcov = cluster_se)
 
@@ -96,11 +107,11 @@ data_clean$achievement_quartile <- cut(data_clean$percentile,
                                        labels = 1:4)
 
 # OLS with interaction terms
-model_interaction <- lm(totalscore ~ tracking * achievement_quartile, data = data_clean)
+model_interaction <- lm(totalscore_std ~ tracking * achievement_quartile, data = data_clean)
 summary(model_interaction)
 
 # 8. Peer Effects Analysis
-model_peer_effects <- lm(totalscore ~ rMEANstream_std_baselinemark, data = data_clean)
+model_peer_effects <- lm(totalscore_std ~ rMEANstream_std_baselinemark, data = data_clean)
 summary(model_peer_effects)
 
 # 9. Regression Discontinuity Analysis (Optional)
@@ -169,17 +180,3 @@ data.frame(Age_Balance_Test = balance_age$p.value,
                      
 data.frame(RESET_Test_pvalue = reset_test$p.value, 
                      BP_Test_pvalue = bp_test$p.value)                     
-
-
-
-
-write.csv(data.frame(Age_Balance_Test = balance_age$p.value, 
-                     Gender_Balance_Test = balance_gender$p.value, 
-                     Baseline_Score_Balance_Test = balance_baseline_score$p.value), 
-          "Week 5/data//Balance_Tests.csv")
-
-write.csv(data.frame(RESET_Test_pvalue = reset_test$p.value, 
-                     BP_Test_pvalue = bp_test$p.value), 
-          "Week 5/data//Consistency_Tests.csv")
-
-write.csv(descriptive_results_df, "Week 5/data//Descriptive_Statistics.csv")
