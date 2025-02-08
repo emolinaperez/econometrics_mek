@@ -42,8 +42,8 @@ descriptive_results_df <- data.frame(Variable = vars_to_analyze, descriptive_res
 descriptive_results_df
 
 # Visualize the distribution of total scores by tracking status using ggplot
-p <- ggplot(data_clean, aes(x = totalscore, fill = factor(tracking))) +
-  geom_histogram(position = "dodge", bins = 30, alpha = 0.7) +
+ggplot(data, aes(x = std_mark, fill = factor(tracking))) +
+  geom_histogram(aes(y = ..density..), color = "black")  +
   facet_wrap(~tracking, labeller = as_labeller(c(`0` = "Non-Tracking Schools", `1` = "Tracking Schools"))) +
   scale_fill_manual(values = c("red", "blue")) +
   labs(title = "Distribution of Total Scores by Tracking Status", 
@@ -52,7 +52,15 @@ p <- ggplot(data_clean, aes(x = totalscore, fill = factor(tracking))) +
        fill = "Tracking") +
   theme_minimal()
 
-print(p)
+  ggplot(data, aes(x = std_mark, fill = factor(tracking))) +
+   geom_density()  +
+  facet_wrap(~tracking, labeller = as_labeller(c(`0` = "Non-Tracking Schools", `1` = "Tracking Schools"))) +
+  scale_fill_manual(values = c("red", "blue")) +
+  labs(title = "Distribution of Total Scores by Tracking Status", 
+       x = "Total Score", 
+       y = "Frequency", 
+       fill = "Tracking") +
+  theme_minimal()
 
 # 5. Replicating Key Results (Replicating Table 2)
 # Simple OLS regression: Impact of tracking on total scores
