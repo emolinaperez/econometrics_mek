@@ -3,10 +3,10 @@ rm(list=ls())
 # load packages
 if (!require(pacman)) install.packages("pacman")
 library(pacman)
-pacman::p_load('ggplot2','haven', 'fixest', 'modelsummary', 'olsrr')
+pacman::p_load('tidyverse',"data.table",'ggplot2','haven', 'fixest', 'modelsummary', 'olsrr')
 
 #load data
-Data.File<-"https://raw.githubusercontent.com/emolinaperez/econometrics_mek/main/Week%207/data/AJR2001.dta"
+Data.File<-"Week 7/data/AJR2001.dta"
 Data<-read_dta(Data.File)
 
 head(Data)
@@ -65,6 +65,102 @@ ggplot(Data, aes(x = Rlmort, y = Rrisk)) +
   theme_classic() +  # White background and clean design
   scale_y_continuous(breaks = seq(-2, 3, by = 2))
 
+# TABLE 1—DESCRIPTIVE STATISTICS
+
+t1data <- read_dta('Week 7/data/maketable1.dta') %>% as.data.table()
+
+table <- function(dt, variables) {
+  # Crear una lista vacía para almacenar los resultados
+  stats_list <- list()
+  
+  # Para cada variable, calcular media y SD
+  for(var in variables) {
+    stats_list[[var]] <- c(
+      mean(dt[[var]], na.rm = TRUE),
+      sd(dt[[var]], na.rm = TRUE)
+    )
+  }
+  
+  # Convertir a data.table
+  stats_dt <- data.table(stats_list)
+  
+  return(stats_dt)
+}
+
+stats_by_mortality <- function(dt, variables) {
+
+  ranges <- list(
+    range1 = list(min = -Inf, max = 65.4),
+    range2 = list(min = 65.4, max = 78.1),
+    range3 = list(min = 78.1, max = 280),
+    range4 = list(min = 280, max = Inf)
+  )
+  
+  stats_list <- list()
+  
+  for(var in variables) {
+    means <- numeric(4)
+    
+    for(i in 1:4) {
+      range <- ranges[[i]]
+      means[i] <- dt[excolony == 1 & 
+                    !is.na(extmort4) & 
+                    !is.na(avexpr) & 
+                    !is.na(logpgp95) & 
+                    extmort4 >= range$min & 
+                    extmort4 < range$max,
+                    mean(get(var), na.rm = TRUE)]
+    }
+    
+    stats_list[[var]] <- means
+  }
+  
+  stats_dt <- data.frame(stats_list)
+  
+  return(stats_dt)
+}
+
+# table
+vars <- c("logpgp95", "loghjypl", "avexpr", "cons00a","cons90", "cons1", "democ00a", "euro1900","logem4")
+c1 <- table(t1data, vars)
+c2 <- table(t1data[baseco==1,], vars)
+c3 <- stats_by_mortality(t1data, vars)
+
+table_1 <- cbind(c("log GDP per capita, PPP, in 1995",
+                       "log output per worker in 1988",
+                       "Average protection against expropriation risk, 1985-1995",
+                       "Constraint on executive, 1900",
+                       "Constraint on executive in 1990",
+                       "Constraint on executive in first year of independence",
+                       "Democracy in 1900",
+                       "European settlement in 1900",
+                       "Log European settler mortality"),
+                       c1,c2,c3)
+
+# print table
+table_1
+
+# TABLE 2—OLS REGRESSIONS
+t2data <- read_dta('Week 7/data/maketable2.dta') %>% as.data.table()
+
+c1 <- lm(logpgp95 ~ avexpr, data = t2data)
+c2 <- lm(logpgp95 ~ avexpr, data = t2data[baseco==1,])
+c3 <- lm(logpgp95 ~ avexpr + lat_abst, data = t2data)
+c4 <- lm(logpgp95 ~ avexpr + lat_abst + africa + asia + other, data = t2data)
+c5 <- lm(logpgp95 ~ avexpr + lat_abst , data = t2data[baseco==1,])
+c6 <- lm(logpgp95 ~ avexpr + lat_abst + africa + asia + other, data = t2data[baseco==1,])
+c7 <- lm(loghjypl ~ avexpr , data = t2data)
+c8 <- lm(loghjypl ~ avexpr , data = t2data[baseco==1,])
+
+modelsummary(list(c1,c2,c3,c4,c5,c6,c7,c8),
+             coef_omit = "(Intercept)",
+             coef_map = c(
+               "avexpr"= "Average protection against expropriation risk, 1985–1995",
+               "lat_abst" = "Latitude",
+               "africa" = "Africa Dummy",
+               "asia" = "Asia Dummy",
+               "other" = "Other Continent Dummy"),
+             stars = TRUE)
 
 # TABLE 4—IV REGRESSIONS OF LOG GDP PER CAPITA
 
