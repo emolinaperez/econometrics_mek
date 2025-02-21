@@ -3,7 +3,7 @@ rm(list=ls())
 # load packages
 if (!require(pacman)) install.packages("pacman")
 library(pacman)
-pacman::p_load('tidyverse',"data.table",'ggplot2','haven', 'fixest', 'modelsummary', 'olsrr')
+pacman::p_load('tidyverse',"data.table",'ggplot2','haven', 'fixest', 'modelsummary', 'olsrr','caret','ISLR2','cv')
 
 #load data
 Data.File<-"Week 7/data/AJR2001.dta"
@@ -82,40 +82,52 @@ table <- function(dt, variables) {
   }
   
   # Convertir a data.table
-  stats_dt <- data.table(stats_list)
+  stats_dt <- data.frame(stats_list)
   
   return(stats_dt)
 }
 
 stats_by_mortality <- function(dt, variables) {
 
-  ranges <- list(
-    range1 = list(min = -Inf, max = 65.4),
-    range2 = list(min = 65.4, max = 78.1),
-    range3 = list(min = 78.1, max = 280),
-    range4 = list(min = 280, max = Inf)
-  )
-  
   stats_list <- list()
   
+  
   for(var in variables) {
-    means <- numeric(4)
     
-    for(i in 1:4) {
-      range <- ranges[[i]]
-      means[i] <- dt[excolony == 1 & 
-                    !is.na(extmort4) & 
-                    !is.na(avexpr) & 
-                    !is.na(logpgp95) & 
-                    extmort4 >= range$min & 
-                    extmort4 < range$max,
-                    mean(get(var), na.rm = TRUE)]
-    }
-    
-    stats_list[[var]] <- means
+    stats_list[[var]] <- c(
+      # Range 1: < 65.4
+      dt[excolony == 1 & !is.na(extmort4) & !is.na(avexpr) & 
+         !is.na(logpgp95) & extmort4 < 65.4, mean(get(var), na.rm = TRUE)],
+      dt[excolony == 1 & !is.na(extmort4) & !is.na(avexpr) & 
+         !is.na(logpgp95) & extmort4 < 65.4, sd(get(var), na.rm = TRUE)],
+      
+      # Range 2: 65.4 - 78.1
+      dt[excolony == 1 & !is.na(extmort4) & !is.na(avexpr) & 
+         !is.na(logpgp95) & extmort4 >= 65.4 & extmort4 < 78.1, mean(get(var), na.rm = TRUE)],
+      dt[excolony == 1 & !is.na(extmort4) & !is.na(avexpr) & 
+         !is.na(logpgp95) & extmort4 >= 65.4 & extmort4 < 78.1, sd(get(var), na.rm = TRUE)],
+      
+      # Range 3: 78.1 - 280
+      dt[excolony == 1 & !is.na(extmort4) & !is.na(avexpr) & 
+         !is.na(logpgp95) & extmort4 >= 78.1 & extmort4 < 280, mean(get(var), na.rm = TRUE)],
+      dt[excolony == 1 & !is.na(extmort4) & !is.na(avexpr) & 
+         !is.na(logpgp95) & extmort4 >= 78.1 & extmort4 < 280, sd(get(var), na.rm = TRUE)],
+      
+      # Range 4: >= 280
+      dt[excolony == 1 & !is.na(extmort4) & !is.na(avexpr) & 
+         !is.na(logpgp95) & extmort4 >= 280, mean(get(var), na.rm = TRUE)],
+      dt[excolony == 1 & !is.na(extmort4) & !is.na(avexpr) & 
+         !is.na(logpgp95) & extmort4 >= 280, sd(get(var), na.rm = TRUE)]
+    )
   }
   
+  
   stats_dt <- data.frame(stats_list)
+  
+  rownames(stats_dt) <- c("Mean_Range1", "SD_Range1",
+                         "Mean_Range2", "SD_Range2",
+                         "Mean_Range3", "SD_Range3",
+                         "Mean_Range4", "SD_Range4")
   
   return(stats_dt)
 }
@@ -126,6 +138,10 @@ c1 <- table(t1data, vars)
 c2 <- table(t1data[baseco==1,], vars)
 c3 <- stats_by_mortality(t1data, vars)
 
+c1
+c2
+c3
+
 table_1 <- cbind(c("log GDP per capita, PPP, in 1995",
                        "log output per worker in 1988",
                        "Average protection against expropriation risk, 1985-1995",
@@ -135,8 +151,7 @@ table_1 <- cbind(c("log GDP per capita, PPP, in 1995",
                        "Democracy in 1900",
                        "European settlement in 1900",
                        "Log European settler mortality"),
-                       c1,c2,c3)
-
+                       t(c1),t(c2),t(c3))
 # print table
 table_1
 
@@ -155,7 +170,7 @@ c8 <- lm(loghjypl ~ avexpr , data = t2data[baseco==1,])
 modelsummary(list(c1,c2,c3,c4,c5,c6,c7,c8),
              coef_omit = "(Intercept)",
              coef_map = c(
-               "avexpr"= "Average protection against expropriation risk, 1985–1995",
+               "avexpr"= "Average risk, 1985–1995",
                "lat_abst" = "Latitude",
                "africa" = "Africa Dummy",
                "asia" = "Asia Dummy",
@@ -211,8 +226,6 @@ modelsummary(list(iv1,iv2, iv3),
                "asia" = "Asia Dummy",
                "other" = "Other Continent Dummy"),
              stars = TRUE)
-
-
 
 
 #define controls 
@@ -411,7 +424,7 @@ plot(k)
 # Cross Validation using library caret  
 #####
 #install.packages("caret")
-library(caret)
+#library(caret)
 #specify the cross-validation method
 ctrl <- trainControl(method = "cv", number = 5)
 
@@ -440,7 +453,8 @@ names(model)
 #Cross Validation using library cv
 ##
 #install.packages("ISLR2")
-library("ISLR2")
+#library("ISLR2")
+
 data("Auto", package="ISLR2")
 head(Auto)
 plot(mpg ~ horsepower, data=Auto)
@@ -460,7 +474,7 @@ legend("topright", legend=1:5, col=2:6, lty=1:5, lwd=2,
 
 #cross/validation
 #install.packages("cv")
-library("cv") # for mse() and other functions
+#library("cv") # for mse() and other functions
 
 var <- mse <- numeric(10)
 for (p in 1:10){
